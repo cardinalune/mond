@@ -1,0 +1,93 @@
+{
+    "type": {
+        "key": "/type/edition"
+    },
+    "authors": [
+        {
+            "key": "/authors/OL4782813A"
+        }
+    ],
+    "languages": [
+        {
+            "key": "/languages/eng"
+        }
+    ],
+    "pagination": "560",
+    "publish_date": "2022",
+    "publishers": [
+        "Bloom Books"
+    ],
+    "source_records": [
+        "bwb:9781728274898",
+        "amazon:1728274893",
+        "promise:bwb_daily_pallets_2023-09-26:O9-BET-878"
+    ],
+    "title": "Twisted Lies",
+    "weight": "0.010 ",
+    "full_title": "TLs",
+    "works": [
+        {
+            "key": "/works/OL27818823W"
+        }
+    ],
+    "key": "/books/OL38446297M",
+    "local_id": [
+        "urn:bwbsku:O9-BET-878"
+    ],
+    "identifiers": {
+        "better_world_books": [
+            "9781728274898"
+        ],
+        "alibris_id": [
+            "9781728274898"
+        ],
+        "abebooks.de": [
+            "32334034822"
+        ],
+        "storygraph": [
+            "f38db66d-d58e-4730-9000-077f1f7b5b8c"
+        ],
+        "amazon": [
+            "1728274893"
+        ],
+        "goodreads": [
+            "62058385"
+        ]
+    },
+    "covers": [
+        15144107
+    ],
+    "isbn_13": [
+        "9781728274898"
+    ],
+    "oclc_numbers": [
+        "1317835459"
+    ],
+    "isbn_10": [
+        "1728274893"
+    ],
+    "dewey_decimal_class": [
+        "813.6"
+    ],
+    "lc_classifications": [
+        "PS3608.U264 T86"
+    ],
+    "publish_places": [
+        "Naperville, Illinois, USA"
+    ],
+    "series": [
+        "Twisted, 4"
+    ],
+    "physical_format": "Paperback",
+    "number_of_pages": 560,
+    "latest_revision": 7,
+    "revision": 7,
+    "created": {
+        "type": "/type/datetime",
+        "value": "2022-06-19T05:34:14.334739"
+    },
+    "last_modified": {
+        "type": "/type/datetime",
+        "value": "2025-11-17T16:34:19.209394"
+    }
+}
