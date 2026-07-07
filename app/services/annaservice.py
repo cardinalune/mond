@@ -28,7 +28,7 @@ class AnnaService:
 
         title = self._extract_title(soup)
         authors = self._extract_authors(soup)
-        codes = self._extract_codes(soup)
+        codes = self._extract_codes(soup)           
 
         identifiers = self._extract_identifiers(codes)
 
@@ -68,7 +68,6 @@ class AnnaService:
 
         for div in soup.find_all("div"):
             classes = div.get("class", [])
-
             if "text-amber-900" in classes and div.has_attr("data-content"):
                 return [div["data-content"]]
 
@@ -78,16 +77,83 @@ class AnnaService:
 
         for div in soup.find_all("div"):
             classes = div.get("class", [])
-
             if "text-violet-900" in classes and div.has_attr("data-content"):
                 return div["data-content"]
 
         return None
 
+
     def _extract_identifiers(self, codes):
 
         identifiers = Identifiers()
 
+#----------------------------MD5------------------------------------
         identifiers.md5 = codes.get("MD5")
+        
+
+#----------------------------ISBN-10------------------------------------
+        if  isinstance(codes.get("ISBN-10") , str):
+           identifiers.isbn_10.append(codes.get("ISBN-10"))
+        else:    
+            for isbn10s in codes.get("ISBN-10" , []):
+                if isbn10s not in identifiers.isbn_10:
+                    identifiers.isbn_10.append(isbn10s)
+
+
+#----------------------------ISBN-13------------------------------------
+        if isinstance(codes.get("ISBN-13") , str):
+            identifiers.isbn_13.append(codes.get("ISBN-13"))
+        else:    
+            for isbn13s in codes.get("ISBN-13" , []):
+                if isbn13s not in identifiers.isbn_13:
+                    identifiers.isbn_13.append(isbn13s)
+
+
+#----------------------------OLEID------------------------------------
+        if codes.get("Open Library")[0].endswith("M"):
+            identifiers.oleid = codes.get("Open Library")[0]
+        else:identifiers.oleid = codes.get("Open Library")[1] 
+            # i want something here finalises the book with 100% accuracy cuz it already matches no need for further compuation
+       
+
+#----------------------------OLWID------------------------------------
+        if codes.get("Open Library")[1].endswith("W"):
+            identifiers.olwid = codes.get("Open Library")[1]
+        else:identifiers.olwid = codes.get("Open Library")[0]
+
+
+#---------------------------Source records--------------------------------
+        SOURCE_MAP = {
+            "amazon": "amazon",
+            "goodreads": "goodreads",
+            "storygraph": "storygraph",
+            "abebooks": "abebooks",
+            "alibris": "alibris_id",
+            "bwb": "better_world_books"
+    }
+
+        if isinstance(codes.get("Open Library Source Record") , str):
+            source, value = codes.get("Open Library Source Record").split(":", 1)
+            field_name = SOURCE_MAP.get(source)
+            if field_name:
+                getattr(identifiers, field_name).append(value)
+
+        else:        
+            for record in codes.get("Open Library Source Record", []):
+
+                source, value = record.split(":", 1)
+
+                field_name = SOURCE_MAP.get(source)
+
+                if field_name:
+                    getattr(identifiers, field_name).append(value)
+
+ #----------------------------ISBN-13------------------------------------
+        if isinstance(codes.get("OCLC") , str):
+            identifiers.oclc.append(codes.get("OCLC"))
+        else:    
+            for oclcs in codes.get("OCLC" , []):
+                if oclcs not in identifiers.oclc:
+                    identifiers.oclc.append(oclcs)            
 
         return identifiers    
