@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Book:
+    
     title: str
     identifiers: Identifiers
     full_title: str | None = None

@@ -13,12 +13,12 @@ class AnnaService:
         }
 
     def get_book(self, md5):
-        url = f"https://annas-archive.gl/md5/{md5}"
+        url = f"https://annas-archive.pk/md5/{md5}"
 
         response = requests.get(
             url,
             headers=self.headers,
-            timeout=10
+            timeout=(10,30)
         )
 
         if response.status_code != 200:
@@ -110,17 +110,21 @@ class AnnaService:
 
 
 #----------------------------OLEID------------------------------------
-        if codes.get("Open Library")[0].endswith("M"):
-            identifiers.oleid = codes.get("Open Library")[0]
-        else:identifiers.oleid = codes.get("Open Library")[1] 
-            # i want something here finalises the book with 100% accuracy cuz it already matches no need for further compuation
+        try:
+            if codes.get("Open Library")[0].endswith("M"):
+                identifiers.oleid = codes.get("Open Library")[0]
+            else:identifiers.oleid = codes.get("Open Library")[1] 
+        except Exception as e:
+            identifiers.oleid="not found"  
        
 
 #----------------------------OLWID------------------------------------
-        if codes.get("Open Library")[1].endswith("W"):
-            identifiers.olwid = codes.get("Open Library")[1]
-        else:identifiers.olwid = codes.get("Open Library")[0]
-
+        try:
+            if codes.get("Open Library")[1].endswith("W"):
+                identifiers.olwid = codes.get("Open Library")[1]
+            else:identifiers.olwid = codes.get("Open Library")[0]
+        except Exception as e:
+            identifiers.olwid="not found"
 
 #---------------------------Source records--------------------------------
         SOURCE_MAP = {
@@ -148,7 +152,7 @@ class AnnaService:
                 if field_name:
                     getattr(identifiers, field_name).append(value)
 
- #----------------------------ISBN-13------------------------------------
+ #----------------------------OCLC------------------------------------
         if isinstance(codes.get("OCLC") , str):
             identifiers.oclc.append(codes.get("OCLC"))
         else:    

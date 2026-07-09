@@ -31,16 +31,29 @@ class OpenLibraryService:
             #BOOKS
             title = data.get("title")
             full_title = data.get("full_title")
+
             authors = []
 
             for author in data.get("authors", []):
-                authors.append(author["key"].split("/")[-1])            
-            publish_date = data.get("publish_date" )
-            publishers = data.get("publishers" , [])
-            languages = []
+                olaid = author["key"].split("/")[-1]
 
+                author_name = self._get_author(olaid)
+
+                if author_name:
+                    authors.append(author_name)    
+
+
+            publish_date = data.get("publish_date" )
+
+
+            publishers = data.get("publishers" , [])
+
+
+            languages = []
             for language in data.get("languages", []):
                 languages.append(language["key"].split("/")[-1])
+
+                
             pages = data.get("number_of_pages")
             if pages is None:
                 pages = data.get("pagination")
@@ -98,6 +111,21 @@ class OpenLibraryService:
             
 
         return None
+
+    def _get_author(self, olaid):
+        url = f"https://openlibrary.org/authors/{olaid}.json"
+
+        response = requests.get(
+            url,
+            headers=self.headers,
+            timeout=5
+            )
+
+        if response.status_code != 200:
+            return None
+
+        data = response.json()
+        return data.get("name")
 
 
         
