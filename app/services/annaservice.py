@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 from app.models.book import Book
 from app.models.identifiers import Identifiers
+from app.exceptions.bookexceptions import BookNotFoundError
+from app.exceptions.serviceexceptions import ExternalServiceError
 
 
 class AnnaService:
@@ -15,14 +17,24 @@ class AnnaService:
     def get_book(self, md5):
         url = f"https://annas-archive.pk/md5/{md5}"
 
-        response = requests.get(
-            url,
-            headers=self.headers,
-            timeout=(10,30)
-        )
+        try:
+            response= requests.get(
+                url,
+                headers=self.headers,
+                timeout=10
+            )
+        except requests.Timeout:
+            raise ExternalServiceError("Anna's Archive request timed out.")
+        except requests.ConnectionError:
+            raise ExternalServiceError("Unable to connect to Anna's Archive.")
+        except requests.RequestException:
+            raise ExternalServiceError("Unexpected error while communicating with Anna's Archive.")
+
+        if response.status_code == 404:
+            raise BookNotFoundError("Book Not Found In Anna's Archive")
 
         if response.status_code != 200:
-            return None
+            raise ExternalServiceError("Anna's Archive returned an unexpected response")
 
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -114,8 +126,8 @@ class AnnaService:
             if codes.get("Open Library")[0].endswith("M"):
                 identifiers.oleid = codes.get("Open Library")[0]
             else:identifiers.oleid = codes.get("Open Library")[1] 
-        except Exception as e:
-            identifiers.oleid="not found"  
+        except (TypeError , IndexError):
+            pass  
        
 
 #----------------------------OLWID------------------------------------
@@ -123,8 +135,8 @@ class AnnaService:
             if codes.get("Open Library")[1].endswith("W"):
                 identifiers.olwid = codes.get("Open Library")[1]
             else:identifiers.olwid = codes.get("Open Library")[0]
-        except Exception as e:
-            identifiers.olwid="not found"
+        except (TypeError , IndexError):
+            pass
 
 #---------------------------Source records--------------------------------
         SOURCE_MAP = {

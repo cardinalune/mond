@@ -1,11 +1,26 @@
 from fastapi import FastAPI
-from app.schemas.submit import SubmitRequest
 from app.api.health import router as health_router
 from app.api.submit import router as submit_router
+from app.exceptions.bookexceptions import BookNotFoundError
+from app.exceptions.serviceexceptions import ExternalServiceError
+from app.exceptions.handler import (
+    book_not_found_handler,
+    external_service_handler,
+)
 
 
 
 app = FastAPI()
+
+app.add_exception_handler(
+    BookNotFoundError,
+    book_not_found_handler
+)
+
+app.add_exception_handler(
+    ExternalServiceError,
+    external_service_handler
+)
 
 app.include_router(health_router)
 app.include_router(submit_router)
@@ -14,20 +29,8 @@ app.include_router(submit_router)
 @app.get("/")
 def root():
     return{
-        "message":"mond here"
+        "message":"Welcome to Mond"
     }
 
-
-@app.get("/books/{olid}")
-def booklookup(olid):
-    return{
-        "message": "Looking up book",
-        "olid": "OL123M"
-    }     
-
-
-@app.get("/books")
-def get_books(page:int=1 , limit:int=10):
-    return{"page":page , "limit":limit}  
 
 

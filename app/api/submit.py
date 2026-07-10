@@ -14,11 +14,13 @@ validator = Validator()
 
 @router.post("/submit")
 def submit(request : SubmitRequest):
-    ol_book = anna_service.get_book(request.md5)
-    anna_book = ol_service.get_book(request.olid)
+    
+    ol_book = ol_service.get_book(request.olid)
+    anna_book = anna_service.get_book(request.md5)
 
     result =validator.validate(ol_book ,anna_book )
 
+    
     return{
         "match" : result.match,
         "confidence" : result.confidence,
