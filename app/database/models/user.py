@@ -71,6 +71,11 @@ class User(Base):
     )
 
     reviewed_submissions: Mapped[list["Submission"]] = relationship(
-    back_populates="moderator",
-    foreign_keys="Submission.moderator_id"
-)
+        back_populates="moderator",
+        foreign_keys="Submission.moderator_id"
+    )
+
+    last_login: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )

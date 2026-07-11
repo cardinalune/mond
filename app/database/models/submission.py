@@ -38,9 +38,9 @@ class Submission(Base):
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
-    UUID(as_uuid=True),
-    ForeignKey("users.id"),
-    nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
     )
     user: Mapped["User"] = relationship(
         back_populates="submissions",
@@ -53,8 +53,8 @@ class Submission(Base):
         nullable=True
     )
     moderator: Mapped["User | None"] = relationship(
-    back_populates="reviewed_submissions",
-    foreign_keys=[moderator_id]
+        back_populates="reviewed_submissions",
+        foreign_keys=[moderator_id]
     )
 
     md5: Mapped[str] = mapped_column(
@@ -94,8 +94,8 @@ class Submission(Base):
     )
 
     submitted_at: Mapped[datetime] = mapped_column(
-    DateTime(timezone=True),
-    default=lambda: datetime.now(UTC)
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC)
     )
 
     reviewed_at: Mapped[datetime | None] = mapped_column(
