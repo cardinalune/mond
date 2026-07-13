@@ -1,2 +1,0 @@
-class ExternalServiceError(Exception):
-    pass

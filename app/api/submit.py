@@ -1,9 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.services.annaservice import AnnaService
 from app.services.openlibraryservice import OpenLibraryService
 from app.services.validator import Validator
 from app.schemas.submit import SubmitRequest
 from app.models.validationresult import ValidationResult
+from app.database.database import get_db
+from app.database.repositories.submissionrepository import SubmissionRepository
+from dataclasses import asdict
+
+
 
 router = APIRouter()
 
@@ -13,19 +19,31 @@ validator = Validator()
 
 
 @router.post("/submit")
-def submit(request : SubmitRequest):
-    
+def submit(
+    request: SubmitRequest,
+    db: Session = Depends(get_db),
+):
+
     ol_book = ol_service.get_book(request.olid)
     anna_book = anna_service.get_book(request.md5)
 
-    result =validator.validate(ol_book ,anna_book )
+    result = validator.validate(ol_book, anna_book)
 
-    
-    return{
-        "match" : result.match,
-        "confidence" : result.confidence,
-        "list" : result.reasons
+    submission_repo = SubmissionRepository(db)
+
+    submission = submission_repo.create_submission(
+        user_id=None,
+        md5=request.md5,
+        olid=request.olid,
+        anna_snapshot=asdict(anna_book),
+        ol_snapshot=asdict(ol_book),
+        validation_score=result.confidence,
+        is_match=result.match,
+    )
+
+    return {
+        "submission_id": str(submission.id),
+        "match": result.match,
+        "confidence": result.confidence,
+        "reasons": result.reasons,
     }
-     
-
-    

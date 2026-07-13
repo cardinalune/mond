@@ -1,8 +1,8 @@
 import requests
 from app.models.book import Book
 from app.models.identifiers import Identifiers
-from app.exceptions.bookexceptions import BookNotFoundError
-from app.exceptions.serviceexceptions import ExternalServiceError
+from app.exceptions.book import BookNotFoundError
+from app.exceptions.service import ExternalServiceError
 
 
 class OpenLibraryService:

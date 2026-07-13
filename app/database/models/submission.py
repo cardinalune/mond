@@ -1,4 +1,5 @@
-import uuid
+from uuid import UUID , uuid4
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from datetime import UTC, datetime
 from enum import Enum
 
@@ -13,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+
 
 from app.database.database import Base
 from typing import TYPE_CHECKING
@@ -31,14 +32,14 @@ class Submission(Base):
 
     __tablename__ = "submissions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4
+        default=uuid4
     )
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False
     )
@@ -47,8 +48,8 @@ class Submission(Base):
         foreign_keys=[user_id]
     )
 
-    moderator_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
+    moderator_id: Mapped[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=True
     )
