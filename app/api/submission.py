@@ -8,6 +8,8 @@ from app.models.validationresult import ValidationResult
 from app.database.database import get_db
 from app.database.repositories.submissionrepository import SubmissionRepository
 from dataclasses import asdict
+from app.database.models.user import User
+from app.utils.security import get_current_user
 
 
 
@@ -21,6 +23,7 @@ validator = Validator()
 @router.post("/submit")
 def submit(
     request: SubmitRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -32,7 +35,7 @@ def submit(
     submission_repo = SubmissionRepository(db)
 
     submission = submission_repo.create_submission(
-        user_id=None,
+        user_id=current_user.id,
         md5=request.md5,
         olid=request.olid,
         anna_snapshot=asdict(anna_book),

@@ -2,7 +2,7 @@ from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
 
 from app.exceptions.service import (ExternalServiceError , InternalServiceError,)
 from app.exceptions.book import BookNotFoundError
-from app.exceptions.authenctication import (
+from app.exceptions.authentication import (
     UsernameAlreadyExistsError,
     EmailAlreadyExistsError,
     InvalidCredentialsError,

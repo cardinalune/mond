@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from app.api.health import router as health_router
-from app.api.submit import router as submit_router
+from app.api.submission import router as submit_router
 from app.api.auth import router as auth_router
 from app.exceptions.book import BookNotFoundError
 from app.exceptions.service import ExternalServiceError , InternalServiceError
-from app.exceptions.authenctication import (
+from app.exceptions.authentication import (
     UsernameAlreadyExistsError,
     EmailAlreadyExistsError,
     InvalidCredentialsError,
