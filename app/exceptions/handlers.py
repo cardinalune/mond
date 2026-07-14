@@ -1,5 +1,3 @@
-from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
-
 from app.exceptions.service import (ExternalServiceError , InternalServiceError,)
 from app.exceptions.book import BookNotFoundError
 from app.exceptions.authentication import (
@@ -15,6 +13,7 @@ from app.exceptions.user import UserNotFoundError
 from app.exceptions.supabase import SupabaseError
 from fastapi.responses import JSONResponse
 from fastapi import status , Request
+from app.utils.security import get_current_user , require_moderator , require_admin
 
 def book_not_found_handler(request : Request ,exc : BookNotFoundError,):
 
@@ -127,6 +126,5 @@ def supabase_error_handler(request : Request , exc : SupabaseError):
             "detail": str(exc)
         }
     )
-
 
 

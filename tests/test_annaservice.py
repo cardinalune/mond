@@ -1,4 +1,4 @@
-from app.services.annaservice import AnnaService
+from app.services.anna import AnnaService
 
 service = AnnaService()
 

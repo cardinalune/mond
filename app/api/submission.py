@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.services.annaservice import AnnaService
-from app.services.openlibraryservice import OpenLibraryService
+from app.services.anna import AnnaService
+from app.services.openlibrary import OpenLibraryService
 from app.services.validator import Validator
 from app.schemas.submit import SubmitRequest
 from app.models.validationresult import ValidationResult
 from app.database.database import get_db
-from app.database.repositories.submissionrepository import SubmissionRepository
+from app.database.repositories.submission import SubmissionRepository
 from dataclasses import asdict
 from app.database.models.user import User
-from app.utils.security import get_current_user
+from app.utils.security import get_current_user , require_admin , require_moderator
 
 
 

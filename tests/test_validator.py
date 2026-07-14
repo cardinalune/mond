@@ -1,5 +1,5 @@
-from app.services.openlibraryservice import OpenLibraryService
-from app.services.annaservice import AnnaService
+from app.services.openlibrary import OpenLibraryService
+from app.services.anna import AnnaService
 from app.services.validator import Validator
 
 ol = OpenLibraryService()

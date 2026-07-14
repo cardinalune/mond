@@ -5,13 +5,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.database.repositories.userrepository import UserRepository
+from app.database.repositories.user import UserRepository
 from app.database.models.user import User
 from app.exceptions.authorization import PermissionDeniedError
 from app.utils.supabase import supabase
 from app.exceptions.authentication import InvalidTokenError , AuthenticationRequiredError 
 from app.exceptions.user import UserNotFoundError
 from typing import Optional
+from app.database.models.user import UserRole
 
 
 security = HTTPBearer(auto_error=False)
@@ -21,6 +22,18 @@ def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
+    """
+    Authenticate the current user using a Supabase access token.
+
+    Returns:
+        User: The authenticated Mond user.
+
+    Raises:
+        AuthenticationRequiredError
+        InvalidTokenError
+        UserNotFoundError
+        PermissionDeniedError
+    """
 
     if credentials is None:
         raise AuthenticationRequiredError(
@@ -63,3 +76,36 @@ def get_current_user(
         )
 
     return user
+
+
+def require_moderator(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Require the authenticated user to be a moderator or admin.
+    """
+
+    if current_user.role not in (
+        UserRole.MODERATOR,
+        UserRole.ADMIN,
+    ):
+        raise PermissionDeniedError(
+            "Moderator privileges required."
+        )
+
+    return current_user
+
+
+def require_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Require the authenticated user to be an administrator.
+    """
+
+    if current_user.role != UserRole.ADMIN:
+        raise PermissionDeniedError(
+            "Administrator privileges required."
+        )
+
+    return current_user

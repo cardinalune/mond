@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.database.models.submission import Submission
+from app.database.models.submission import Submission, SubmissionStatus
 
 
 class SubmissionRepository:
@@ -58,3 +58,40 @@ class SubmissionRepository:
         result = self.db.execute(statement)
 
         return result.scalar_one_or_none()
+
+
+
+    def list_by_status(
+        self,
+        status: SubmissionStatus,
+        limit:int,
+        offset:int,
+    ) ->list[Submission]:
+
+        statement = (
+            select(Submission)
+            .where(Submission.status == status)
+            .order_by(Submission.submitted_at.asc())
+            .limit(limit)
+            .offset(offset)
+        )
+
+        result = self.db.execute(statement)
+        return result.scalars().all()
+
+
+    def save(
+        self,
+        submission: Submission,
+    ) -> Submission:
+
+        self.db.add(submission)
+
+        try:
+            self.db.commit()
+            self.db.refresh(submission)
+            return submission
+
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise

@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 import traceback
-from app.exceptions.authentication import UsernameAlreadyExistsError , InvalidCredentialsError , EmailNotVerifiedError
+from app.exceptions.authentication import UsernameAlreadyExistsError , InvalidCredentialsError , EmailNotVerifiedError , EmailAlreadyExistsError
 from app.exceptions.supabase import SupabaseError
 from app.schemas.auth import SignupRequest , LoginRequest , SignupResponse , LoginResponse
-from app.database.repositories.userrepository import UserRepository
+from app.database.repositories.user import UserRepository
 from app.utils.supabase import supabase
 
 class AuthService:
@@ -14,11 +14,17 @@ class AuthService:
 
     def signup(self, request: SignupRequest)-> SignupResponse:
 
-        existing = self.user_repo.get_by_username(request.username)
+        existingUser = self.user_repo.get_by_username(request.username)
+        existingEmail = self.user_repo.get_by_email(request.email)
 
-        if existing:
+        if existingUser:
             raise UsernameAlreadyExistsError(
                 f"{request.username} already exists"
+            )
+
+        if existingEmail:
+            raise EmailAlreadyExistsError(
+                "Email already exists"
             )
 
         try:

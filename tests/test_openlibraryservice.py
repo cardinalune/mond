@@ -1,4 +1,4 @@
-from app.services.openlibraryservice import OpenLibraryService
+from app.services.openlibrary import OpenLibraryService
 
 service = OpenLibraryService()
 
