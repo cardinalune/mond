@@ -1,3 +1,7 @@
+from fastapi.responses import JSONResponse
+from fastapi import status , Request
+
+
 from app.exceptions.service import (ExternalServiceError , InternalServiceError,)
 from app.exceptions.book import BookNotFoundError
 from app.exceptions.authentication import (
@@ -11,9 +15,8 @@ from app.exceptions.authentication import (
 from app.exceptions.authorization import PermissionDeniedError
 from app.exceptions.user import UserNotFoundError
 from app.exceptions.supabase import SupabaseError
-from fastapi.responses import JSONResponse
-from fastapi import status , Request
-from app.utils.security import get_current_user , require_moderator , require_admin
+from app.exceptions.submission import SubmissionAlreadyReviewedError , SubmissionNotFoundError
+
 
 def book_not_found_handler(request : Request ,exc : BookNotFoundError,):
 
@@ -128,3 +131,20 @@ def supabase_error_handler(request : Request , exc : SupabaseError):
     )
 
 
+def submission_not_found_handler(request : Request , exc : SubmissionNotFoundError):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={
+            "detail": str(exc)
+        }
+    )
+
+
+
+def submission_already_reviewed_handler(request : Request , exc : SubmissionAlreadyReviewedError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={
+            "detail": str(exc)
+        }
+    )

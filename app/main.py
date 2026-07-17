@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from app.api.health import router as health_router
 from app.api.submission import router as submit_router
 from app.api.auth import router as auth_router
+from app.api.moderator import router as mod_router
+from app.api.export import router as export_router
+
+
 from app.exceptions.book import BookNotFoundError
 from app.exceptions.service import ExternalServiceError , InternalServiceError
 from app.exceptions.authentication import (
@@ -16,6 +20,7 @@ from app.exceptions.authentication import (
 from app.exceptions.authorization import PermissionDeniedError
 from app.exceptions.user import UserNotFoundError
 from app.exceptions.supabase import SupabaseError
+from app.exceptions.submission import SubmissionAlreadyReviewedError , SubmissionNotFoundError
 
 from app.exceptions.handlers import (
     book_not_found_handler,
@@ -30,6 +35,8 @@ from app.exceptions.handlers import (
     user_not_found_handler,
     supabase_error_handler,
     internal_service_handler,
+    submission_already_reviewed_handler,
+    submission_not_found_handler,
 )
 
 
@@ -96,11 +103,23 @@ app.add_exception_handler(
     supabase_error_handler
 )
 
+app.add_exception_handler(
+    SubmissionAlreadyReviewedError,
+    submission_already_reviewed_handler
+)
+
+app.add_exception_handler(
+    SubmissionNotFoundError,
+    submission_not_found_handler
+)
+
 
 
 app.include_router(health_router)
 app.include_router(submit_router)
 app.include_router(auth_router)
+app.include_router(mod_router)
+app.include_router(export_router)
 
 
 @app.get("/")

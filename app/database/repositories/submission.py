@@ -64,17 +64,20 @@ class SubmissionRepository:
     def list_by_status(
         self,
         status: SubmissionStatus,
-        limit:int,
-        offset:int,
+        limit:int | None=None,
+        offset:int =0,
     ) ->list[Submission]:
 
         statement = (
             select(Submission)
             .where(Submission.status == status)
             .order_by(Submission.submitted_at.asc())
-            .limit(limit)
-            .offset(offset)
+            
         )
+        if limit is not None:
+            statement = statement.limit(limit)
+
+        statement = statement.offset(offset)
 
         result = self.db.execute(statement)
         return result.scalars().all()
