@@ -1,38 +1,47 @@
+from dataclasses import asdict
+
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+
+from app.schemas.submit import SubmitRequest
+from app.database.models.user import User
+from app.database.repositories.submission import SubmissionRepository
+
 from app.services.anna import AnnaService
 from app.services.openlibrary import OpenLibraryService
 from app.services.validator import Validator
-from app.schemas.submit import SubmitRequest
-from app.models.validationresult import ValidationResult
-from app.database.database import get_db
-from app.database.repositories.submission import SubmissionRepository
-from dataclasses import asdict
-from app.database.models.user import User
-from app.utils.security import get_current_user , require_admin , require_moderator
 
+from app.dependencies.services import (
+    get_anna_service,
+    get_openlibrary_service,
+    get_submission_repository,
+    get_validator,
+)
+
+from app.utils.security import get_current_user
 
 
 router = APIRouter()
-
-anna_service = AnnaService()
-ol_service = OpenLibraryService()
-validator = Validator()
 
 
 @router.post("/submit")
 def submit(
     request: SubmitRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    anna_service: AnnaService = Depends(get_anna_service),
+    ol_service: OpenLibraryService = Depends(get_openlibrary_service),
+    validator: Validator = Depends(get_validator),
+    submission_repo: SubmissionRepository = Depends(
+        get_submission_repository
+    ),
 ):
 
     ol_book = ol_service.get_book(request.olid)
     anna_book = anna_service.get_book(request.md5)
 
-    result = validator.validate(ol_book, anna_book)
-
-    submission_repo = SubmissionRepository(db)
+    result = validator.validate(
+        ol_book,
+        anna_book,
+    )
 
     submission = submission_repo.create_submission(
         user_id=current_user.id,

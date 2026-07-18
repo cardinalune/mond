@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-import traceback
 from app.exceptions.authentication import UsernameAlreadyExistsError , InvalidCredentialsError , EmailNotVerifiedError , EmailAlreadyExistsError
 from app.exceptions.supabase import SupabaseError
 from app.schemas.auth import SignupRequest , LoginRequest , SignupResponse , LoginResponse

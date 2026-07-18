@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from app.database.models.user import User
-from app.dependencies.admin import get_export_service
+from app.dependencies.services import get_export_service
 from app.services.export import ExportService
 from app.utils.security import require_admin
 

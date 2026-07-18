@@ -7,7 +7,11 @@ from collections.abc import Generator
 load_dotenv()
 
 
-db_url:str = os.getenv("DATABASE_URL")  # pyright: ignore[reportAssignmentType]
+db_url:str = os.getenv("DATABASE_URL") 
+if not db_url:
+    raise RuntimeError(
+        "DATABASE_URL environment variable is not set."
+    )
 
 
 engine = create_engine(db_url)

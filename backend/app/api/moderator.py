@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends , Query
 from sqlalchemy.orm import Session
 from uuid import UUID
 from app.database.models.user import User
-from app.dependencies.moderator import get_moderator_service
+from app.dependencies.services import get_moderator_service
 from app.utils.security import require_moderator
 from app.services.moderator import ModeratorService
 from app.schemas.moderation import PendingSubmissionResponse , SubmissionDetailResponse
