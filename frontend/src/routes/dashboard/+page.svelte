@@ -1,6 +1,8 @@
-svelte
-<!-- src/routes/dashboard/+page.svelte -->
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { user } from "$lib/stores/auth";
+
+	
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		'layout-dashboard':
@@ -153,6 +155,12 @@ svelte
 			year: 'numeric'
 		});
 	}
+
+	$effect(() => {
+		if ($user === null) {
+			goto("/login");
+		}
+	});
 </script>
 
 {#snippet icon(name: string, size: number = 16, strokeWidth: number = 1.5)}
@@ -220,7 +228,7 @@ svelte
 						Dataset
 					</a>
 					<a
-						href="/settings"
+						href="/dashboard/settings"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 					>
 						{@render icon('settings', 15)}
@@ -253,7 +261,7 @@ svelte
 						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{contributor.email}</p>
 					</div>
 					<a
-						href="/settings"
+						href="/dashboard/settings"
 						role="menuitem"
 						class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-light text-[#3F3F46] transition-colors hover:bg-[#F4F4F5]"
 					>
@@ -290,7 +298,7 @@ svelte
 				Dataset
 			</a>
 			<a
-				href="/settings"
+				href="/dashboard/settings"
 				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 			>
 				{@render icon('settings', 14)}
@@ -364,7 +372,7 @@ svelte
 					</div>
 					<div class="mt-8 sm:mt-0 sm:ml-10 sm:shrink-0">
 						<a
-							href="/submit"
+							href="/dashboard/submit"
 							class="inline-flex items-center gap-2.5 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-7 py-3.5 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
 						>
 							{@render icon('plus', 15, 2)}
@@ -408,7 +416,7 @@ svelte
 						</p>
 						<div class="mt-8">
 							<a
-								href="/submit"
+								href="/dashboard/submit"
 								class="inline-flex items-center gap-2.5 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
 							>
 								{@render icon('upload', 15)}

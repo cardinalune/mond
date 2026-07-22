@@ -1,6 +1,13 @@
-svelte
-<!-- src/routes/login/+page.svelte -->
 <script lang="ts">
+import { login } from "$lib/api/auth";
+import type { LoginRequest } from "$lib/types/auth";
+import { goto } from "$app/navigation";
+import {
+	loadCurrentUser,
+	user,
+} from "$lib/stores/auth";
+
+import { get } from "svelte/store";
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		github:
@@ -13,12 +20,60 @@ svelte
 
 	let email = $state('');
 	let password = $state('');
+
 	let showPassword = $state(false);
 
-	function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
-		// Wire to a form action in production.
+	let loading = $state(false);
+	let error = $state("");
+
+	async function handleSubmit(event: SubmitEvent) {
+	event.preventDefault();
+
+	error = "";
+	loading = true;
+
+	try {
+		const payload: LoginRequest = {
+			email,
+			password,
+		};
+
+		const response = await login(payload);
+
+		localStorage.setItem(
+			"access_token",
+			response.access_token
+		);
+
+		localStorage.setItem(
+			"refresh_token",
+			response.refresh_token
+		);
+
+		await loadCurrentUser();
+
+		const currentUser = get(user);
+
+		if (currentUser?.role === "admin" ||
+			currentUser?.role === "moderator") {
+
+			await goto("/moderator");
+
+		} else {
+
+			await goto("/dashboard");
+
+		}
+
+
+	} catch (err) {
+		error = err instanceof Error
+			? err.message
+			: "Something went wrong.";
+	} finally {
+		loading = false;
 	}
+}
 </script>
 
 {#snippet icon(name: string, size: number = 16, strokeWidth: number = 1.5)}
@@ -85,18 +140,31 @@ svelte
 				</a>
 			</div>
 
-			<div class="paper rounded-lg p-8 sm:p-10">
-				<p class="text-[11px] tracking-[0.35em] uppercase text-[#A1A1AA]">
-					Welcome back.
+			<div class="paper rounded-lg p-8  sm:p-10">
+				<p class="text-[11px] tracking-[0.35em] uppercase text-center text-[#A1A1AA]">
+					Open metadata begins with trust
 				</p>
-				<h1 class="mt-4 text-3xl font-extralight tracking-tight text-[#18181B]">
+				<h1 class="mt-5 text-3xl font-extralight tracking-tight text-center text-[#18181B]">
 					Sign in
 				</h1>
-				<p class="mt-3 text-sm font-light leading-relaxed text-[#52525B]">
+				<p class="mt-4 text-sm font-light leading-relaxed text-center text-[#52525B]">
 					Sign in using your Mond account.
 				</p>
 
 				<form class="mt-10 space-y-6" onsubmit={handleSubmit}>
+
+
+					<!-- Error Box -->
+					{#if error}
+						<div
+							class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+						>
+							{error}
+						</div>
+					{/if}
+
+
+
 					<!-- Email -->
 					<div>
 						<label
@@ -126,12 +194,14 @@ svelte
 							>
 								Password
 							</label>
+							<!--
 							<a
 								href="/forgot-password"
 								class="text-xs font-light text-[#71717A] transition-colors hover:text-[#6D28D9]"
 							>
 								Forgot password?
 							</a>
+							-->
 						</div>
 						<div class="relative">
 							<input
@@ -159,28 +229,16 @@ svelte
 					<!-- Primary action -->
 					<button
 						type="submit"
-						class="w-full rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
+						disabled={loading}
+						class="w-full rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14] disabled:opacity-60 disabled:cursor-not-allowed "
+						
+						
 					>
-						Sign in
+						{loading ? "Signing in..." : "Sign in"}
 					</button>
 				</form>
 
-				<!-- Divider -->
-				<div class="my-8 flex items-center gap-4" aria-hidden="true">
-					<span class="h-px flex-1 bg-[#F4F4F5]"></span>
-					<span class="text-[10px] tracking-[0.25em] uppercase text-[#A1A1AA]">or</span>
-					<span class="h-px flex-1 bg-[#F4F4F5]"></span>
-				</div>
-
-				<!-- GitHub -->
-				<a
-					href="/auth/github"
-					class="flex w-full items-center justify-center gap-2.5 rounded-md border border-[#E4E4E7] bg-white px-6 py-3 text-sm text-[#3F3F46] shadow-sm transition-colors hover:border-[#8B5CF6]/40 hover:bg-[#8B5CF6]/[0.05]"
-				>
-					{@render icon('github', 15)}
-					Continue with GitHub
-				</a>
-			</div>
+				
 
 			<!-- Register hint below the card -->
 			<p class="mt-8 text-center text-sm font-light text-[#71717A]">

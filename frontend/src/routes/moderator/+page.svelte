@@ -1,6 +1,22 @@
-svelte
-<!-- src/routes/moderator/+page.svelte -->
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { user } from "$lib/stores/auth";
+
+	$effect(() => {
+	if (!$user) {
+		goto("/login");
+		return;
+	}
+
+	if (
+		$user.role !== "moderator" &&
+		$user.role !== "admin"
+	) {
+		goto("/dashboard");
+	}
+	});
+
+	
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		'layout-dashboard':
@@ -94,6 +110,7 @@ svelte
 		approved: 'check',
 		rejected: 'x'
 	};
+	
 </script>
 
 {#snippet icon(name: string, size: number = 16, strokeWidth: number = 1.5)}
@@ -163,7 +180,7 @@ svelte
 						Dataset
 					</a>
 					<a
-						href="/settings"
+						href="/moderator/settings"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 					>
 						{@render icon('settings', 15)}
@@ -196,7 +213,7 @@ svelte
 						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{moderator.email}</p>
 					</div>
 					<a
-						href="/settings"
+						href="/moderator/settings"
 						role="menuitem"
 						class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-light text-[#3F3F46] transition-colors hover:bg-[#F4F4F5]"
 					>

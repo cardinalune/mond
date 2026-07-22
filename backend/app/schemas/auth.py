@@ -24,3 +24,12 @@ class LoginResponse(BaseModel):
     refresh_token: str
     expires_in: int
     token_type: str = "Bearer"
+
+    role: str
+
+
+class CurrentUserResponse(BaseModel):
+    id: str
+    username: str
+    email: EmailStr
+    role: str

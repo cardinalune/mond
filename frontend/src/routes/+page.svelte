@@ -1,5 +1,3 @@
-svelte
-<!-- src/routes/+page.svelte -->
 <script lang="ts">
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
@@ -35,7 +33,7 @@ svelte
 		{
 			icon: 'upload',
 			title: 'Submit',
-			desc: 'Propose a mapping between an Anna’s Archive record and an Open Library edition.'
+			desc: 'Propose a mapping between an MD5 record and an Open Library edition.'
 		},
 		{
 			icon: 'search-check',
@@ -50,7 +48,7 @@ svelte
 		{
 			icon: 'file-down',
 			title: 'Export',
-			desc: 'Approved mappings join the public dataset — free to download, forever.'
+			desc: 'Verified Mappings join the public dataset — free to download, forever.'
 		}
 	];
 
@@ -80,7 +78,7 @@ svelte
 		{
 			icon: 'eye',
 			title: 'Transparent review',
-			desc: 'Every moderation decision is recorded. The dataset carries its own provenance.'
+			desc: 'Every moderation decision is recorded.'
 		}
 	];
 </script>
@@ -106,7 +104,7 @@ svelte
 	<title>Mond — Preserving book metadata through community verification</title>
 	<meta
 		name="description"
-		content="Mond is an open-source archive that maps Anna’s Archive books to Open Library editions. Every mapping is verified by human moderators."
+		content="Mond is an open-source archive that maps MD5 records to Open Library editions. Every mapping is verified by human moderators."
 	/>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
@@ -129,7 +127,7 @@ svelte
 
 			<div class="flex items-center gap-1 sm:gap-2">
 				<a
-					href="https://github.com"
+					href="https://github.com/cardinalune/mond?"
 					class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 					aria-label="GitHub repository"
 				>
@@ -156,7 +154,7 @@ svelte
 	<section class="daylight relative flex min-h-screen flex-col items-center justify-end overflow-hidden px-6 pb-28">
 		<div class="relative z-10 mx-auto max-w-3xl text-center">
 			<p class="mb-8 text-[11px] font-normal tracking-[0.35em] uppercase text-[#71717A]">
-				An open archive project
+				Open metadata infrastructure
 			</p>
 
 			<h1 class="text-balance text-5xl font-extralight leading-[1.08] tracking-tight text-[#18181B] sm:text-6xl md:text-7xl">
@@ -166,9 +164,9 @@ svelte
 			</h1>
 
 			<p class="mx-auto mt-8 max-w-xl text-pretty text-[15px] font-light leading-relaxed text-[#52525B]">
-				Mond preserves the links between Anna’s Archive books and Open Library
-				editions. Every mapping is reviewed by a human moderator before it enters
-				the public record.
+				Mond preserves verified mappings between MD5 fingerprints and Open Library editions.
+				Every mapping is reviewed by a human moderator before it enters
+				the public dataset.
 			</p>
 
 			<div class="mt-12 flex items-center justify-center gap-6">
@@ -179,7 +177,7 @@ svelte
 					Start contributing
 				</a>
 				<a
-					href="https://github.com"
+					href="https://github.com/cardinalune/mond?"
 					class="flex items-center gap-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 				>
 					{@render icon('github', 15)}
@@ -212,12 +210,12 @@ svelte
 				<!-- ink thread -->
 				<div class="thread pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2" aria-hidden="true"></div>
 
-				<!-- Panel 1: Anna's Archive Record -->
+				<!-- Panel 1: MD5 Record -->
 				<div class="paper relative rounded-lg p-6 sm:p-8">
 					<div class="mb-5 flex items-center justify-between">
 						<span class="flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-[#71717A]">
 							{@render icon('book-marked', 13)}
-							Anna’s Archive record
+							MD5 record
 						</span>
 						<span class="mono text-[11px] text-[#A1A1AA]">source</span>
 					</div>
@@ -283,7 +281,7 @@ svelte
 							Moderator review
 						</span>
 						<span class="rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10 px-2.5 py-0.5 text-[11px] text-[#16A34A]">
-							Approved
+							Verified
 						</span>
 					</div>
 					<blockquote class="quote text-[15px] leading-relaxed text-[#3F3F46]">
@@ -297,10 +295,10 @@ svelte
 					<span class="connector-node">{@render icon('arrow-down', 11)}</span>
 				</div>
 
-				<!-- Panel 5: Approved Mapping (sealed) -->
+				<!-- Panel 5: Verified Mapping (sealed) -->
 				<div class="paper sealed relative rounded-lg p-6 text-center sm:p-10">
 					<span class="text-[11px] tracking-[0.25em] uppercase text-[#6D28D9]">
-						Approved mapping
+						Verified Mapping
 					</span>
 					<p class="mono mt-5 text-sm text-[#18181B] sm:text-base">
 						f2b4d1a9…9e12
@@ -435,7 +433,7 @@ svelte
 
 			<div class="mt-14 flex justify-center">
 				<a
-					href="https://github.com"
+					href="https://github.com/cardinalune/mond?"
 					class="flex items-center gap-2.5 rounded-md border border-[#E4E4E7] bg-white px-6 py-3 text-sm text-[#18181B] shadow-sm transition-colors hover:border-[#8B5CF6]/40 hover:bg-[#8B5CF6]/[0.05]"
 				>
 					{@render icon('github', 16)}
@@ -464,14 +462,8 @@ svelte
 					<span class="text-[11px] tracking-[0.25em] uppercase text-[#A1A1AA]">Project</span>
 					<a href="https://github.com" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">GitHub</a>
 					<a href="/license" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">License (AGPL-3.0)</a>
-					<a href="/dataset" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">Dataset</a>
 				</div>
-				<div class="flex flex-col gap-3">
-					<span class="text-[11px] tracking-[0.25em] uppercase text-[#A1A1AA]">Neighbors</span>
-					<a href="https://openlibrary.org" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">Open Library</a>
-					<a href="https://annas-archive.org" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">Anna’s Archive</a>
-					<a href="https://archive.org" class="font-light text-[#71717A] transition-colors hover:text-[#18181B]">Internet Archive</a>
-				</div>
+				
 			</div>
 		</div>
 

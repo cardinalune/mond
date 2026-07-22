@@ -1,6 +1,8 @@
-svelte
-<!-- src/routes/register/+page.svelte -->
 <script lang="ts">
+
+import { signup } from "$lib/api/auth";
+import type { SignupRequest } from "$lib/types/auth";
+
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		eye: '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
@@ -15,6 +17,9 @@ svelte
 	let confirmPassword = $state('');
 	let showPassword = $state(false);
 	let showConfirmPassword = $state(false);
+	let loading = $state(false);
+	let error = $state("");
+	let success = $state("");
 
 	// Validation error placeholders. Populate from a form action in production.
 	// Example: errors.email = 'Email is required.';
@@ -25,9 +30,46 @@ svelte
 		confirmPassword: ''
 	};
 
-	function handleSubmit(event: SubmitEvent) {
+	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		// Wire to a form action in production.
+
+		error = "";
+		success = "";
+		loading = true;
+
+		if (password !== confirmPassword) {
+    		error = "Passwords do not match.";
+			confirmPassword = "";
+    		loading = false;
+   			return;
+		}
+		if (password.length < 8) {
+    		error = "Password must be at least 8 characters.";
+			loading = false;
+    		return;
+		}
+
+		try {
+			const payload: SignupRequest = {
+				username,
+				email,
+				password,
+			};
+
+			const response = await signup(payload);
+
+			success = response.message;
+
+			username = "";
+			email = "";
+			password = "";
+			confirmPassword = "";
+		} catch (err) {
+			error = err instanceof Error ? err.message : "Something went wrong.";
+			
+		} finally {	
+			loading = false;
+		}
 	}
 </script>
 
@@ -103,20 +145,30 @@ svelte
 				</a>
 			</div>
 
-			<div class="paper rounded-lg p-8 sm:p-10">
-				<p class="text-[11px] tracking-[0.35em] uppercase text-[#A1A1AA]">
+			<div class="paper  rounded-lg p-8 sm:p-10">
+				<p class="text-[11px] tracking-[0.35em] text-center uppercase text-[#A1A1AA]">
 					Welcome
 				</p>
-				<h1 class="mt-4 text-3xl font-extralight tracking-tight text-[#18181B]">
+				<h1 class="mt-5 text-3xl font-extralight text-center tracking-tight text-[#18181B]">
 					Create account
 				</h1>
-				<p class="mt-3 text-sm font-light leading-relaxed text-[#52525B]">
-					Create your Mond account to contribute verified mappings between
-					Anna’s Archive and Open Library.
+				<p class="mt-4 text-sm font-light text-center leading-relaxed text-[#52525B]">
+					Create your Mond account to contribute.
 				</p>
 
 				<form class="mt-10 space-y-6" onsubmit={handleSubmit} novalidate>
 					<!-- Username -->
+					{#if success}
+						<div class="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+							{success}
+						</div>
+					{/if}
+
+					{#if error}
+						<div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+							{error}
+						</div>
+					{/if}
 					<div>
 						<label
 							for="username"
@@ -131,7 +183,7 @@ svelte
 							bind:value={username}
 							required
 							autocomplete="username"
-							placeholder="lena"
+							placeholder="ceris"
 							aria-describedby="username-error"
 							aria-invalid={errors.username ? 'true' : undefined}
 							class="field w-full rounded-md px-4 py-3 text-sm font-light text-[#18181B] placeholder:text-[#A1A1AA]"
@@ -232,11 +284,12 @@ svelte
 
 					<!-- Primary action -->
 					<button
-						type="submit"
-						class="w-full rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
-					>
-						Create account
-					</button>
+					type="submit"
+					disabled={loading}
+					class="w-full rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
+				>
+					{loading ? "Creating account..." : "Create account"}
+				</button>
 				</form>
 			</div>
 

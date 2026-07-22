@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
 from app.exceptions.authentication import UsernameAlreadyExistsError , InvalidCredentialsError , EmailNotVerifiedError , EmailAlreadyExistsError
 from app.exceptions.supabase import SupabaseError
+from app.exceptions.service import InternalServiceError
 from app.schemas.auth import SignupRequest , LoginRequest , SignupResponse , LoginResponse
 from app.database.repositories.user import UserRepository
 from app.utils.supabase import supabase
+from fastapi import HTTPException
 
 class AuthService:
 
@@ -34,9 +36,11 @@ class AuthService:
                 }
             )
         except Exception as e:
-            raise SupabaseError(
-            " Failed to communicate with Supabase."
-            ) from e
+            print("Supabase error:", e)
+            raise HTTPException(
+                status_code=503,
+                detail=str(e)
+            )
 
 
         if response.user is None:
@@ -83,11 +87,14 @@ class AuthService:
             raise SupabaseError(
                 "Failed to communicate with Supabase."
             ) from e
+            
+        user = self.user_repo.get_by_email(request.email)
 
         return LoginResponse(
             access_token=response.session.access_token,
             refresh_token=response.session.refresh_token,
             expires_in=response.session.expires_in,
             token_type="Bearer",
+            role=user.role.value,
         )
 
