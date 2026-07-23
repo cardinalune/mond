@@ -43,10 +43,7 @@ class ValidationResponse(BaseModel):
 class SubmitMappingRequest(BaseModel):
     md5: str
     olid: str
-    anna_record: dict
-    openlibrary_record: dict
-    confidence: float
-    match: bool
+    
 
 class SubmitMappingResponse(BaseModel):
     submission_id: str

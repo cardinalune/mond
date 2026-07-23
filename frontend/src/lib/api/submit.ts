@@ -31,10 +31,6 @@ export async function validateMapping(
 export async function submitMapping(payload: {
     md5: string;
     olid: string;
-    anna_record: Record<string, any>;
-    openlibrary_record: Record<string, any>;
-    confidence: number;
-    match: boolean;
 }): Promise<SubmitResponse> {
 
     return api<SubmitResponse>("/submit", {
