@@ -30,3 +30,24 @@ class SubmitRequest(BaseModel):
         else:
             raise ValueError("OLID must start with OL and end with M wiith numbers in between")
         
+
+class ValidationResponse(BaseModel):
+    match: bool
+    confidence: float
+    reasons: list[str]
+
+    anna_record: dict
+    openlibrary_record: dict
+
+
+class SubmitMappingRequest(BaseModel):
+    md5: str
+    olid: str
+    anna_record: dict
+    openlibrary_record: dict
+    confidence: float
+    match: bool
+
+class SubmitMappingResponse(BaseModel):
+    submission_id: str
+    status: str

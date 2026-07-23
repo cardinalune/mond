@@ -1,4 +1,5 @@
 import { user } from "$lib/stores/auth";
+import { goto } from "$app/navigation";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -30,7 +31,7 @@ export async function api<T>(
 	user.set(null);
 
 	if (window.location.pathname !== "/login") {
-		window.location.href = "/login";
+		goto("/login");
 	}
 
 	throw new Error("Session expired.");

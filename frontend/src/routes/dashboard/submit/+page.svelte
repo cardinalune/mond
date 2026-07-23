@@ -1,6 +1,11 @@
-svelte
-<!-- src/routes/submit/+page.svelte -->
+
 <script lang="ts">
+	import { user, authLoading } from "$lib/stores/auth";
+	import type { ValidationResponse } from "$lib/api/submit";
+	import {
+	validateMapping,
+	submitMapping,
+	} from "$lib/api/submit";
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		'layout-dashboard':
@@ -27,70 +32,138 @@ svelte
 			'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
 		'arrow-down': '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'
 	};
-
-	const contributor = {
-		name: 'Lena Hoffmann',
-		email: 'lena@posteo.de',
-		initials: 'LH'
-	};
+	
+	function getInitials(name: string) {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+	}
 
 	// Form state
-	let md5 = $state('f2b4d1a9c07e83aa41c69e12');
-	let olid = $state('OL7602281M');
+	let md5 = $state('');
+	let olid = $state('');
+	let submitting = $state(false);
+
 
 	// Mock validation result — pure frontend, assume validation completed.
 	type BookRecord = {
-		title: string;
-		author: string;
-		publisher: string;
-		year: string;
-		language: string;
+    	title: string;
+    	authors: string[];
+    	publishers: string[];
+    	publish_date: string | null;
+    	languages: string[];
 	};
 
-	const annasRecord: BookRecord = {
-		title: 'The Left Hand of Darkness',
-		author: 'Ursula K. Le Guin',
-		publisher: 'Ace Books',
-		year: '1969',
-		language: 'English'
-	};
 
-	const openLibraryRecord: BookRecord = {
-		title: 'The Left Hand of Darkness',
-		author: 'Ursula K. Le Guin',
-		publisher: 'Ace Books',
-		year: '1969',
-		language: 'English'
-	};
+	const recordFields = [
+    	{ key: "title", label: "Title" },
+    	{ key: "authors", label: "Authors" },
+    	{ key: "publishers", label: "Publisher" },
+    	{ key: "publish_date", label: "Published" },
+    	{ key: "languages", label: "Language" }
+	] as const;
 
-	const recordFields: { key: keyof BookRecord; label: string }[] = [
-		{ key: 'title', label: 'Title' },
-		{ key: 'author', label: 'Author' },
-		{ key: 'publisher', label: 'Publisher' },
-		{ key: 'year', label: 'Year' },
-		{ key: 'language', label: 'Language' }
-	];
+	let md5Record = $state<BookRecord | null>(null);
+let openLibraryRecord = $state<BookRecord | null>(null);
 
-	const validationChecks: string[] = [
-		'Title matched',
-		'Author matched',
-		'ISBN checksum valid',
-		'Publication year consistent',
-		'Language matched'
-	];
+let validationChecks = $state<string[]>([]);
+let validationResult = $state<ValidationResponse | null>(null);
 
-	const confidence = 97;
+let confidence = $state(0);
+let validated = $state(false);
+let loading = $state(false);
+
+
+	async function handleValidate(event: SubmitEvent) {
+    event.preventDefault();
+
+    console.log("Validate clicked");
+	console.log("md5 =", md5);
+    console.log("olid =", olid);
+
+    loading = true;
+
+    try {
+        const result = await validateMapping(md5, olid);
+
+        console.log(result);
+		
+
+        md5Record = result.anna_record;
+        openLibraryRecord = result.openlibrary_record;
+
+        confidence = result.confidence;
+        validationChecks = result.reasons;
+        validationResult = result;
+
+        validated = true;
+
+        console.log("validated =", validated);
+
+    } catch (err) {
+        console.error(err);
+    } finally {
+        loading = false;
+    }
+}
+	async function handleSubmit() {
+    if (!validationResult) return;
+
+    submitting = true;
+
+    try {
+        const result = await submitMapping({
+            md5,
+            olid,
+            anna_record: validationResult.anna_record,
+            openlibrary_record: validationResult.openlibrary_record,
+            confidence: validationResult.confidence,
+            match: validationResult.match,
+        });
+
+        console.log(result);
+
+        alert("Mapping submitted successfully!");
+
+        reset();
+
+    } catch (err) {
+        console.error(err);
+        alert("Submission failed.");
+    } finally {
+        submitting = false;
+    }
+}
+
+	function reset(): void {
+		md5 = '';
+		olid = '';
+
+		validated = false;
+    	confidence = 0;
+
+    	md5Record = null;
+    	openLibraryRecord = null;
+		validationResult = null;
+    	validationChecks = [];
+	}
+	function clearValidation() {
+    validated = false;
+    validationResult = null;
+    confidence = 0;
+    md5Record = null;
+    openLibraryRecord = null;
+    validationChecks = [];
+	}
 
 	const guidelines: string[] = [
 		'Every submission is reviewed by a human moderator.',
 		'Automatic validation assists moderators but never replaces human review.',
 		'Approved mappings become part of Mond’s permanent public dataset.'
 	];
-
-	function reset(): void {
-		md5 = '';
-		olid = '';
-	}
 </script>
 
 {#snippet icon(name: string, size: number = 16, strokeWidth: number = 1.5)}
@@ -110,31 +183,74 @@ svelte
 	</svg>
 {/snippet}
 
-{#snippet recordColumn(label: string, iconName: string, tag: string, record: BookRecord)}
-	<div>
-		<div class="mb-5 flex items-center justify-between">
-			<span class="flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-[#71717A]">
-				{@render icon(iconName, 13)}
-				{label}
-			</span>
-			<span class="mono text-[11px] text-[#A1A1AA]">{tag}</span>
-		</div>
-		<dl class="space-y-3">
-			{#each recordFields as field}
-				<div class="flex items-baseline justify-between gap-4 border-b border-[#F4F4F5] pb-3 last:border-0 last:pb-0">
-					<dt class="text-xs font-light text-[#A1A1AA]">{field.label}</dt>
-					<dd class="text-right text-sm font-light text-[#3F3F46]">{record[field.key]}</dd>
-				</div>
-			{/each}
-		</dl>
-	</div>
+	{#snippet recordColumn(
+    label: string,
+    iconName: string,
+    tag: string,
+    record: BookRecord | null
+)}
+
+{#if record}
+
+<div>
+    <div class="mb-5 flex items-center justify-between">
+        <span class="flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-[#71717A]">
+            {@render icon(iconName,13)}
+            {label}
+        </span>
+
+        <span class="mono text-[11px] text-[#A1A1AA]">
+            {tag}
+        </span>
+    </div>
+
+    <dl class="space-y-3">
+
+        {#each recordFields as field}
+
+            <div class="flex items-baseline justify-between gap-4 border-b border-[#F4F4F5] pb-3 last:border-0">
+
+                <dt class="text-xs text-[#A1A1AA]">
+                    {field.label}
+                </dt>
+
+                <dd class="text-right text-sm text-[#3F3F46]">
+
+                    {#if Array.isArray(record[field.key])}
+
+                        {record[field.key].length
+                            ? record[field.key].join(", ")
+                            : "-"}
+
+                    {:else}
+
+                        {record[field.key] ?? "-"}
+
+                    {/if}
+
+                </dd>
+
+            </div>
+
+        {/each}
+
+    </dl>
+
+</div>
+
+{:else}
+
+<p>No record.</p>
+
+{/if}
+
 {/snippet}
 
 <svelte:head>
 	<title>Submit a mapping — Mond</title>
 	<meta
 		name="description"
-		content="Link an Anna’s Archive record to an Open Library edition. Mond validates metadata automatically before human review."
+		content="Link an MD5 record to an Open Library edition. Mond validates metadata automatically before human review."
 	/>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
@@ -179,14 +295,14 @@ svelte
 			<details class="user-menu relative">
 				<summary
 					class="flex cursor-pointer list-none items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-[#F4F4F5]"
-					aria-label="Account menu for {contributor.name}"
+					aria-label="Account menu for {$user?.username}"
 				>
 					<span
 						class="flex h-8 w-8 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] text-xs font-medium text-[#6D28D9]"
 					>
-						{contributor.initials}
+						{$user ? getInitials($user.username) : ""}
 					</span>
-					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{contributor.name}</span>
+					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{$user?.username}</span>
 					<span class="text-[#A1A1AA]">{@render icon('chevron-down', 14)}</span>
 				</summary>
 
@@ -195,8 +311,8 @@ svelte
 					role="menu"
 				>
 					<div class="border-b border-[#F4F4F5] px-4 py-3">
-						<p class="text-sm text-[#18181B]">{contributor.name}</p>
-						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{contributor.email}</p>
+						<p class="text-sm text-[#18181B]">{$user?.username}</p>
+						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{$user?.email}</p>
 					</div>
 					<a
 						href="/settings"
@@ -258,7 +374,7 @@ svelte
 					Submit a new mapping.
 				</h1>
 				<p class="mx-auto mt-4 max-w-md text-sm font-light leading-relaxed text-[#52525B]">
-					Link an Anna’s Archive record to an Open Library edition. Mond
+					Link an MD5 record to an Open Library edition. Mond
 					automatically validates metadata before the submission is reviewed by
 					a human moderator.
 				</p>
@@ -268,7 +384,7 @@ svelte
 			<section aria-labelledby="form-heading" class="mt-14">
 				<h2 id="form-heading" class="sr-only">Mapping details</h2>
 
-				<form class="paper rounded-lg p-6 sm:p-8" onsubmit={(e) => e.preventDefault()}>
+				<form class="paper rounded-lg p-6 sm:p-8" onsubmit={handleValidate}>
 					<div class="mb-6 flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-[#71717A]">
 						{@render icon('book-marked', 13)}
 						Mapping details
@@ -277,21 +393,22 @@ svelte
 					<div class="space-y-7">
 						<div>
 							<label for="md5" class="block text-sm font-light text-[#3F3F46]">
-								Anna’s Archive MD5
+								MD5
 							</label>
 							<input
 								id="md5"
 								name="md5"
 								type="text"
 								bind:value={md5}
-								placeholder="f2b4d1a9c07e83aa41c69e12"
+								oninput={clearValidation}
+								placeholder="8efbf8e9f8b4592c7b0dbedec9c0ec05"
 								autocomplete="off"
 								spellcheck="false"
 								aria-describedby="md5-help"
 								class="mono mt-2 w-full rounded-md border border-[#E4E4E7] bg-white px-4 py-3 text-sm text-[#18181B] shadow-sm transition-colors placeholder:text-[#A1A1AA] focus:border-[#8B5CF6]/50 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]/10"
 							/>
 							<p id="md5-help" class="mt-2 text-xs font-light text-[#A1A1AA]">
-								32-character MD5 hash from Anna’s Archive
+								32-character MD5 hash
 							</p>
 						</div>
 
@@ -305,6 +422,7 @@ svelte
 								type="text"
 								bind:value={olid}
 								placeholder="OL7602281M"
+								oninput={clearValidation}
 								autocomplete="off"
 								spellcheck="false"
 								aria-describedby="olid-help"
@@ -319,21 +437,29 @@ svelte
 					<div class="mt-8 border-t border-[#F4F4F5] pt-6">
 						<button
 							type="submit"
+							disabled={loading || !md5.trim() || !olid.trim()}
 							class="flex w-full items-center justify-center gap-2.5 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3.5 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
 						>
-							{@render icon('search-check', 15)}
-							Validate mapping
+							{#if loading}
+    							Validating...
+							{:else}
+    							{@render icon('search-check',15)}
+    								Validate mapping
+							{/if}
 						</button>
 					</div>
 				</form>
 			</section>
 
 			<!-- Connector between form and result -->
-			<div class="connector" aria-hidden="true">
-				<span class="connector-node">{@render icon('arrow-down', 11)}</span>
-			</div>
+			{#if validated}
+				<div class="connector" aria-hidden="true">
+					<span class="connector-node">{@render icon('arrow-down', 11)}</span>
+				</div>
+			{/if}
 
 			<!-- ============ VALIDATION RESULT ============ -->
+			{#if validated}
 			<section aria-labelledby="result-heading">
 				<div class="paper rounded-lg p-6 sm:p-8">
 					<div class="mb-8 flex items-center justify-between">
@@ -351,7 +477,7 @@ svelte
 
 					<!-- Source & target records -->
 					<div class="grid gap-10 sm:grid-cols-2 sm:gap-8">
-						{@render recordColumn("Anna’s Archive", 'book-marked', 'source', annasRecord)}
+						{@render recordColumn("MD5", 'book-marked', 'source', md5Record)}
 						{@render recordColumn('Open Library', 'library', 'target', openLibraryRecord)}
 					</div>
 
@@ -379,7 +505,15 @@ svelte
 							{confidence}<span class="text-2xl sm:text-3xl">%</span>
 						</p>
 						<p class="mt-2 text-xs font-light tracking-wide text-[#71717A]">
-							High confidence match
+							{#if confidence >= 90}
+        						Excellent match
+    						{:else if confidence >= 70}
+        						Good match
+    						{:else if confidence >= 45}
+        						Possible match
+    						{:else}
+        						Poor match
+    						{/if}
 						</p>
 						<div
 							class="mx-auto mt-5 h-1 w-full max-w-xs overflow-hidden rounded-full bg-[#8B5CF6]/10"
@@ -400,10 +534,16 @@ svelte
 					<div class="mt-8 flex flex-col gap-3 border-t border-[#F4F4F5] pt-6 sm:flex-row">
 						<button
 							type="button"
+							onclick={handleSubmit}
+    						disabled={submitting || !validationResult}
 							class="flex flex-1 items-center justify-center gap-2.5 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-6 py-3.5 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
 						>
-							{@render icon('upload', 15)}
-							Submit mapping
+							{#if submitting}
+    Submitting...
+{:else}
+    {@render icon('upload',15)}
+    Submit mapping
+{/if}
 						</button>
 						<button
 							type="button"
@@ -420,6 +560,8 @@ svelte
 					</p>
 				</div>
 			</section>
+			{/if}
+
 
 			<!-- ============ BEFORE YOU SUBMIT ============ -->
 			<section aria-labelledby="guidelines-heading" class="mt-10">

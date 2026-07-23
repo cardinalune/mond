@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { user } from "$lib/stores/auth";
-
+	import { user, authLoading } from "$lib/stores/auth";
+	
 	
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
@@ -47,69 +47,27 @@
 		accent: 'amber' | 'green' | 'red' | 'ink';
 	};
 
-	// Realistic Mond data. Replace with load() data in production.
-	const contributor = {
-		name: 'Lena Hoffmann',
-		email: 'lena@posteo.de',
-		initials: 'LH'
-	};
 
-	const submissions: Submission[] = [
-		{
-			id: 'sub_0197',
-			md5: 'f2b4d1a9c07e83aa41c69e12',
-			olid: 'OL7602281M',
-			title: 'The Left Hand of Darkness',
-			score: 0.97,
-			status: 'approved',
-			submittedAt: '2025-01-18'
-		},
-		{
-			id: 'sub_0196',
-			md5: 'a81c3f5d92be04711fd08c44',
-			olid: 'OL24347578M',
-			title: 'The Dispossessed',
-			score: 0.94,
-			status: 'approved',
-			submittedAt: '2025-01-17'
-		},
-		{
-			id: 'sub_0195',
-			md5: '4de90bb7215fa3c8e6a1d270',
-			olid: 'OL26331930M',
-			title: 'A Wizard of Earthsea',
-			score: 0.88,
-			status: 'pending',
-			submittedAt: '2025-01-16'
-		},
-		{
-			id: 'sub_0194',
-			md5: 'c7f2e8a10d93b45f6e21ab09',
-			olid: 'OL32571889M',
-			title: 'The Lathe of Heaven',
-			score: 0.91,
-			status: 'pending',
-			submittedAt: '2025-01-15'
-		},
-		{
-			id: 'sub_0193',
-			md5: '9b0e4c6d3f1a82750cd4e918',
-			olid: 'OL3168483M',
-			title: 'Always Coming Home',
-			score: 0.62,
-			status: 'rejected',
-			submittedAt: '2025-01-12'
-		},
-		{
-			id: 'sub_0192',
-			md5: '17d5a2c94eb60f38a2b7c501',
-			olid: 'OL7827093M',
-			title: 'The Word for World Is Forest',
-			score: 0.95,
-			status: 'approved',
-			submittedAt: '2025-01-10'
-		}
-	];
+	
+
+	// Realistic Mond data. Replace with load() data in production.
+	
+	
+
+	function getInitials(name: string) {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+	}
+
+	
+
+	let submissions: Submission[] = [];
+	let loading = true;
+	let error = "";
 
 	const counts = {
 		pending: submissions.filter((s) => s.status === 'pending').length,
@@ -220,13 +178,7 @@
 						{@render icon('layout-dashboard', 15)}
 						Dashboard
 					</a>
-					<a
-						href="/dataset"
-						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
-					>
-						{@render icon('file-down', 15)}
-						Dataset
-					</a>
+				
 					<a
 						href="/dashboard/settings"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
@@ -241,14 +193,14 @@
 			<details class="user-menu relative">
 				<summary
 					class="flex cursor-pointer list-none items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-[#F4F4F5]"
-					aria-label="Account menu for {contributor.name}"
+					aria-label="Account menu for {$user?.username}"
 				>
 					<span
 						class="flex h-8 w-8 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] text-xs font-medium text-[#6D28D9]"
 					>
-						{contributor.initials}
+						{$user ? getInitials($user.username) : ""}
 					</span>
-					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{contributor.name}</span>
+					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{$user?.username}</span>
 					<span class="text-[#A1A1AA]">{@render icon('chevron-down', 14)}</span>
 				</summary>
 
@@ -257,8 +209,8 @@
 					role="menu"
 				>
 					<div class="border-b border-[#F4F4F5] px-4 py-3">
-						<p class="text-sm text-[#18181B]">{contributor.name}</p>
-						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{contributor.email}</p>
+						<p class="text-sm text-[#18181B]">{$user?.username}</p>
+						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{$user?.email}</p>
 					</div>
 					<a
 						href="/dashboard/settings"
@@ -321,7 +273,7 @@
 					Welcome back.
 				</h1>
 				<p class="mt-4 max-w-lg text-sm font-light leading-relaxed text-[#52525B]">
-					Your mappings connect Anna’s Archive records to Open Library editions.
+					Your mappings connect MD5 records to Open Library editions.
 					Every submission passes through validation and human review before it
 					enters the public dataset.
 				</p>
@@ -366,7 +318,7 @@
 							Submit a new mapping.
 						</h2>
 						<p class="mt-2 max-w-md text-sm font-light leading-relaxed text-[#52525B]">
-							Link an Anna’s Archive MD5 to an Open Library edition. Validation
+							Link an MD5 record to an Open Library edition. Validation
 							runs instantly; a moderator reviews it within days.
 						</p>
 					</div>
