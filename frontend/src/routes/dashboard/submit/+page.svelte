@@ -118,10 +118,6 @@ let loading = $state(false);
         const result = await submitMapping({
             md5,
             olid,
-            anna_record: validationResult.anna_record,
-            openlibrary_record: validationResult.openlibrary_record,
-            confidence: validationResult.confidence,
-            match: validationResult.match,
         });
 
         console.log(result);
