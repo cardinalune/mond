@@ -278,7 +278,7 @@ let loading = $state(false);
 					</a>
 					
 					<a
-						href="/settings"
+						href="/dashboard/settings"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 					>
 						{@render icon('settings', 15)}
@@ -311,7 +311,7 @@ let loading = $state(false);
 						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{$user?.email}</p>
 					</div>
 					<a
-						href="/settings"
+						href="/dashboard/settings"
 						role="menuitem"
 						class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-light text-[#3F3F46] transition-colors hover:bg-[#F4F4F5]"
 					>
@@ -347,7 +347,7 @@ let loading = $state(false);
 				Dataset
 			</a>
 			<a
-				href="/settings"
+				href="/dashboard/settings"
 				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 			>
 				{@render icon('settings', 14)}

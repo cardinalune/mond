@@ -3,7 +3,7 @@ from app.models.book import Book
 
 from fastapi import APIRouter, Depends
 
-from app.schemas.submit import SubmitRequest , ValidationResponse , SubmitMappingResponse , SubmitMappingRequest
+from app.schemas.submit import SubmitRequest , ValidationResponse , SubmitMappingResponse , SubmitMappingRequest , SubmissionHistoryItem
 from app.database.models.user import User
 from app.database.repositories.submission import SubmissionRepository
 
@@ -90,3 +90,38 @@ def submit(
         "submission_id": str(submission.id),
         "status": submission.status,
         }
+
+@router.get(
+    "/history",
+    response_model=list[SubmissionHistoryItem],
+)
+def history(
+    current_user: User = Depends(get_current_user),
+    submission_repo: SubmissionRepository = Depends(
+        get_submission_repository,
+    ),
+):
+
+    submissions = submission_repo.list_by_user(
+        current_user.id
+    )
+    
+    return [
+        {
+            "id": str(submission.id),
+            "md5": submission.md5,
+            "olid": submission.olid,
+            "status": submission.status.value,
+            "validation_score": submission.validation_score,
+            "submitted_at": submission.submitted_at,
+            "title": submission.anna_snapshot["title"],
+        }
+        for submission in submissions
+    ]
+
+@router.get("/stats")
+def stats(current_user: User = Depends(get_current_user),
+    submission_repo: SubmissionRepository = Depends(
+        get_submission_repository,
+    ),):
+    return submission_repo.get_user_stats(current_user.id)

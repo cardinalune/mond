@@ -1,18 +1,10 @@
 import { api } from "./client";
-
-export interface ValidationResponse {
-	match: boolean;
-	confidence: number;
-	reasons: string[];
-
-	anna_record: Record<string, any>;
-	openlibrary_record: Record<string, any>;
-}
-
-export interface SubmitResponse {
-	submission_id: string;
-	status: string;
-}
+import type {
+	SubmitResponse,
+    ValidationResponse,
+    SubmissionHistoryItem,
+    SubmissionStats,
+} from "$lib/types/submit";
 
 export async function validateMapping(
     md5: string,
@@ -36,5 +28,17 @@ export async function submitMapping(payload: {
     return api<SubmitResponse>("/submit", {
         method: "POST",
         body: JSON.stringify(payload),
+    });
+}
+
+export async function getSubmissionHistory(): Promise<SubmissionHistoryItem[]> {
+    return api<SubmissionHistoryItem[]>("/history", {
+        method: "GET",
+    });
+}
+
+export async function getSubmissionStats(): Promise<SubmissionStats> {
+    return api<SubmissionStats>("/stats", {
+        method: "GET",
     });
 }

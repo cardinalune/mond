@@ -1,4 +1,5 @@
 from pydantic import BaseModel, field_validator
+from datetime import datetime
 
 class SubmitRequest(BaseModel):
     md5:str
@@ -40,11 +41,25 @@ class ValidationResponse(BaseModel):
     openlibrary_record: dict
 
 
-class SubmitMappingRequest(BaseModel):
-    md5: str
-    olid: str
+class SubmitMappingRequest(SubmitRequest):
+    pass
     
 
 class SubmitMappingResponse(BaseModel):
     submission_id: str
     status: str
+
+
+class SubmissionHistoryItem(BaseModel):
+    id: str
+    md5: str
+    olid: str
+
+    status: str
+
+    validation_score: float
+
+    submitted_at: datetime
+
+    title: str
+    

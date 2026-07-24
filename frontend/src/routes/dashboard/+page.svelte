@@ -1,9 +1,20 @@
+
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { user, authLoading } from "$lib/stores/auth";
-	
-	
-	// Lucide icon path data, inlined — no icon package required.
+import { goto } from "$app/navigation";
+import { onMount } from "svelte";
+
+import { user, authLoading } from "$lib/stores/auth";
+
+import {
+	getSubmissionHistory,
+	getSubmissionStats
+} from "$lib/api/submit";
+
+import type {
+	SubmissionHistoryItem,
+	SubmissionStats
+} from "$lib/types/submit";
+// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		'layout-dashboard':
 			'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
@@ -27,98 +38,78 @@
 			'<path d="M10 2v8l3-3 3 3V2"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',
 		'arrow-up-right': '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>'
 	};
+type SubmissionStatus = "pending" | "approved" | "rejected";
 
-	type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+let submissions = $state<SubmissionHistoryItem[]>([]);
+let stats = $state<SubmissionStats | null>(null);
 
-	type Submission = {
-		id: string;
-		md5: string;
-		olid: string;
-		title: string;
-		score: number;
-		status: SubmissionStatus;
-		submittedAt: string; // ISO date
-	};
+let loading = $state(true);
+let error = $state("");
 
-	type Stat = {
-		label: string;
-		value: number;
-		icon: string;
-		accent: 'amber' | 'green' | 'red' | 'ink';
-	};
+async function loadDashboard() {
+	loading = true;
+	error = "";
 
+	try {
+		const [history, dashboardStats] = await Promise.all([
+			getSubmissionHistory(),
+			getSubmissionStats()
+		]);
 
-	
+		console.log(history);
 
-	// Realistic Mond data. Replace with load() data in production.
-	
-	
-
-	function getInitials(name: string) {
-    return name
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
+		submissions = [...history];
+		stats = { ...dashboardStats };
 	}
-
-	
-
-	let submissions: Submission[] = [];
-	let loading = true;
-	let error = "";
-
-	const counts = {
-		pending: submissions.filter((s) => s.status === 'pending').length,
-		approved: submissions.filter((s) => s.status === 'approved').length,
-		rejected: submissions.filter((s) => s.status === 'rejected').length,
-		total: submissions.length
-	};
-
-	const stats: Stat[] = [
-		{ label: 'Pending', value: counts.pending, icon: 'hourglass', accent: 'amber' },
-		{ label: 'Approved', value: counts.approved, icon: 'check', accent: 'green' },
-		{ label: 'Rejected', value: counts.rejected, icon: 'x', accent: 'red' },
-		{ label: 'Total submissions', value: counts.total, icon: 'book-marked', accent: 'ink' }
-	];
-
-	const statusStyles: Record<SubmissionStatus, string> = {
-		approved: 'border-[#22C55E]/40 bg-[#22C55E]/10 text-[#16A34A]',
-		pending: 'border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#B45309]',
-		rejected: 'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#DC2626]'
-	};
-
-	const statusLabels: Record<SubmissionStatus, string> = {
-		approved: 'Approved',
-		pending: 'Pending',
-		rejected: 'Rejected'
-	};
-
-	const accentStyles: Record<Stat['accent'], string> = {
-		amber: 'border-[#F59E0B]/30 bg-[#F59E0B]/10 text-[#B45309]',
-		green: 'border-[#22C55E]/30 bg-[#22C55E]/10 text-[#16A34A]',
-		red: 'border-[#EF4444]/30 bg-[#EF4444]/10 text-[#DC2626]',
-		ink: 'border-[#8B5CF6]/30 bg-[#8B5CF6]/10 text-[#6D28D9]'
-	};
-
-	function truncateMd5(md5: string): string {
-		return `${md5.slice(0, 8)}…${md5.slice(-4)}`;
+	catch (e) {
+		console.error(e);
+		error = "Failed to load dashboard.";
 	}
-
-	function formatDate(iso: string): string {
-		return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric'
-		});
+	finally {
+		loading = false;
 	}
+}
 
-	$effect(() => {
-		if ($user === null) {
-			goto("/login");
-		}
+function getInitials(name: string) {
+	return name
+		.split(" ")
+		.map((p) => p[0])
+		.join("")
+		.slice(0, 2)
+		.toUpperCase();
+}
+
+function truncateMd5(md5: string) {
+	return `${md5.slice(0, 8)}…${md5.slice(-4)}`;
+}
+
+function formatDate(date: string) {
+	return new Date(date).toLocaleDateString("en-GB", {
+		day: "numeric",
+		month: "short",
+		year: "numeric"
 	});
+}
+
+onMount(loadDashboard);
+
+$effect(() => {
+	if (!$authLoading && !$user) {
+		goto("/login");
+	}
+});
+
+const statusStyles: Record<SubmissionStatus, string> = {
+	approved: "border-[#22C55E]/40 bg-[#22C55E]/10 text-[#16A34A]",
+	pending: "border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#B45309]",
+	rejected: "border-[#EF4444]/40 bg-[#EF4444]/10 text-[#DC2626]"
+};
+
+const statusLabels: Record<SubmissionStatus, string> = {
+	approved: "Approved",
+	pending: "Pending",
+	rejected: "Rejected"
+};
 </script>
 
 {#snippet icon(name: string, size: number = 16, strokeWidth: number = 1.5)}
@@ -146,6 +137,25 @@
 	</span>
 {/snippet}
 
+{#snippet statCard(label: string, value: number, iconName: string, accent: string, iconBox: string)}
+	<div class="paper rounded-lg p-5 sm:p-6">
+		<div class="flex items-start justify-between">
+			<dt class="text-[11px] font-normal tracking-[0.25em] uppercase text-[#A1A1AA]">
+				{label}
+			</dt>
+			<span
+				class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border {iconBox}"
+				aria-hidden="true"
+			>
+				{@render icon(iconName, 14)}
+			</span>
+		</div>
+		<dd class="mono mt-3 text-3xl font-extralight tracking-tight {accent}">
+			{value}
+		</dd>
+	</div>
+{/snippet}
+
 <svelte:head>
 	<title>Dashboard — Mond</title>
 	<meta name="description" content="Your Mond contributor dashboard. Track submissions, review outcomes, and submit new mappings." />
@@ -159,8 +169,8 @@
 
 <div class="page min-h-screen bg-[#FAFAFA] text-[#18181B] antialiased">
 	<!-- ============ NAV ============ -->
-	<header class="border-b border-[#E4E4E7] bg-white/80 backdrop-blur-sm">
-		<nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+	<header class="sticky top-0 z-20 border-b border-[#E4E4E7] bg-white/85 backdrop-blur-sm">
+		<nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4" aria-label="Primary">
 			<div class="flex items-center gap-8">
 				<a href="/" class="group flex items-center gap-3">
 					<span class="crescent-sm" aria-hidden="true"></span>
@@ -173,12 +183,14 @@
 					<a
 						href="/dashboard"
 						aria-current="page"
-						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#18181B]"
+						class="nav-link nav-link--active flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#18181B]"
 					>
 						{@render icon('layout-dashboard', 15)}
 						Dashboard
 					</a>
-				
+
+					
+
 					<a
 						href="/dashboard/settings"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
@@ -197,11 +209,12 @@
 				>
 					<span
 						class="flex h-8 w-8 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] text-xs font-medium text-[#6D28D9]"
+						aria-hidden="true"
 					>
 						{$user ? getInitials($user.username) : ""}
 					</span>
 					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{$user?.username}</span>
-					<span class="text-[#A1A1AA]">{@render icon('chevron-down', 14)}</span>
+					<span class="text-[#A1A1AA]" aria-hidden="true">{@render icon('chevron-down', 14)}</span>
 				</summary>
 
 				<div
@@ -210,7 +223,7 @@
 				>
 					<div class="border-b border-[#F4F4F5] px-4 py-3">
 						<p class="text-sm text-[#18181B]">{$user?.username}</p>
-						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{$user?.email}</p>
+						<p class="mono mt-0.5 truncate text-xs text-[#A1A1AA]">{$user?.email}</p>
 					</div>
 					<a
 						href="/dashboard/settings"
@@ -218,7 +231,7 @@
 						class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-light text-[#3F3F46] transition-colors hover:bg-[#F4F4F5]"
 					>
 						{@render icon('user', 14)}
-						Profile & settings
+						Profile &amp; settings
 					</a>
 					<a
 						href="/logout"
@@ -233,30 +246,24 @@
 		</nav>
 
 		<!-- Mobile nav row -->
-		<div class="flex items-center gap-1 border-t border-[#F4F4F5] px-6 py-2 sm:hidden">
+		<nav class="flex items-center gap-1 overflow-x-auto border-t border-[#F4F4F5] px-6 py-2 sm:hidden" aria-label="Primary mobile">
 			<a
 				href="/dashboard"
 				aria-current="page"
-				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#18181B]"
+				class="nav-link nav-link--active flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#18181B]"
 			>
 				{@render icon('layout-dashboard', 14)}
 				Dashboard
 			</a>
-			<a
-				href="/dataset"
-				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
-			>
-				{@render icon('file-down', 14)}
-				Dataset
-			</a>
+			
 			<a
 				href="/dashboard/settings"
-				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
+				class="flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
 			>
 				{@render icon('settings', 14)}
 				Settings
 			</a>
-		</div>
+		</nav>
 	</header>
 
 	<main class="morning">
@@ -266,40 +273,84 @@
 				<p class="mb-3 text-[11px] tracking-[0.35em] uppercase text-[#A1A1AA]">
 					Contributor dashboard
 				</p>
-				<h1
-					id="welcome-heading"
-					class="text-3xl font-extralight tracking-tight text-[#18181B] sm:text-4xl"
-				>
-					Welcome back.
-				</h1>
-				<p class="mt-4 max-w-lg text-sm font-light leading-relaxed text-[#52525B]">
-					Your mappings connect MD5 records to Open Library editions.
-					Every submission passes through validation and human review before it
-					enters the public dataset.
-				</p>
+				<div class="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
+					<div>
+						<h1
+							id="welcome-heading"
+							class="text-balance text-3xl font-extralight tracking-tight text-[#18181B] sm:text-4xl"
+						>
+							Welcome back.
+						</h1>
+						<p class="mt-4 max-w-lg text-pretty text-sm font-light leading-relaxed text-[#52525B]">
+							Your mappings connect MD5 records to Open Library editions.
+							Every submission passes through validation and human review before it
+							enters the public dataset.
+						</p>
+					</div>
+					<div class="shrink-0">
+						
+					</div>
+				</div>
 			</section>
 
+			<!-- ============ ERROR ============ -->
+			{#if error}
+				<div
+					role="alert"
+					class="mt-10 flex items-center gap-3 rounded-lg border border-[#EF4444]/40 bg-[#EF4444]/[0.06] px-5 py-4 text-sm font-light text-[#DC2626]"
+				>
+					{@render icon('x', 15)}
+					{error}
+				</div>
+			{/if}
+
 			<!-- ============ STATISTICS ============ -->
-			<section aria-label="Submission statistics" class="mt-12">
-				<dl class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-					{#each stats as stat}
-						<div class="paper rounded-lg p-5 sm:p-6">
-							<div class="flex items-center justify-between">
-								<dt class="text-[11px] tracking-[0.25em] uppercase text-[#71717A]">
-									{stat.label}
-								</dt>
-								<span
-									class="flex h-7 w-7 items-center justify-center rounded-full border {accentStyles[stat.accent]}"
-								>
-									{@render icon(stat.icon, 12, 2)}
-								</span>
+			<section aria-labelledby="stats-heading" class="mt-12">
+				<h2 id="stats-heading" class="sr-only">Submission statistics</h2>
+
+				{#if loading && !stats}
+					<!-- Loading skeleton -->
+					<div class="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-hidden="true">
+						{#each Array(4) as _}
+							<div class="paper rounded-lg p-5 sm:p-6">
+								<div class="shimmer h-3 w-16 rounded"></div>
+								<div class="shimmer mt-4 h-8 w-12 rounded"></div>
 							</div>
-							<dd class="mono mt-4 text-3xl font-light text-[#18181B]">
-								{stat.value}
-							</dd>
-						</div>
-					{/each}
-				</dl>
+						{/each}
+					</div>
+					<p class="sr-only" role="status">Loading dashboard…</p>
+				{:else if stats}
+					<dl class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+						{@render statCard(
+							'Pending',
+							stats.pending,
+							'hourglass',
+							'text-[#B45309]',
+							'border-[#F59E0B]/40 bg-[#F59E0B]/10 text-[#B45309]'
+						)}
+						{@render statCard(
+							'Approved',
+							stats.approved,
+							'check',
+							'text-[#16A34A]',
+							'border-[#22C55E]/40 bg-[#22C55E]/10 text-[#16A34A]'
+						)}
+						{@render statCard(
+							'Rejected',
+							stats.rejected,
+							'x',
+							'text-[#DC2626]',
+							'border-[#EF4444]/40 bg-[#EF4444]/10 text-[#DC2626]'
+						)}
+						{@render statCard(
+							'Total',
+							stats.total,
+							'library',
+							'text-[#18181B]',
+							'border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] text-[#6D28D9]'
+						)}
+					</dl>
+				{/if}
 			</section>
 
 			<!-- ============ PRIMARY ACTION ============ -->
@@ -317,7 +368,7 @@
 						>
 							Submit a new mapping.
 						</h2>
-						<p class="mt-2 max-w-md text-sm font-light leading-relaxed text-[#52525B]">
+						<p class="mt-2 max-w-md text-pretty text-sm font-light leading-relaxed text-[#52525B]">
 							Link an MD5 record to an Open Library edition. Validation
 							runs instantly; a moderator reviews it within days.
 						</p>
@@ -327,7 +378,7 @@
 							href="/dashboard/submit"
 							class="inline-flex items-center gap-2.5 rounded-md border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] px-7 py-3.5 text-sm text-[#6D28D9] transition-colors hover:bg-[#8B5CF6]/[0.14]"
 						>
-							{@render icon('plus', 15, 2)}
+							{@render icon('upload', 15)}
 							New mapping
 						</a>
 					</div>
@@ -354,7 +405,22 @@
 					</a>
 				</div>
 
-				{#if submissions.length === 0}
+				{#if loading && submissions.length === 0}
+					<!-- Loading skeleton -->
+					<div class="paper rounded-lg p-6" aria-hidden="true">
+						<div class="space-y-5">
+							{#each Array(3) as _}
+								<div class="flex items-center justify-between gap-6">
+									<div class="flex-1 space-y-2">
+										<div class="shimmer h-3.5 w-40 rounded"></div>
+										<div class="shimmer h-3 w-24 rounded"></div>
+									</div>
+									<div class="shimmer h-5 w-20 rounded-full"></div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{:else if submissions.length === 0}
 					<!-- Empty state -->
 					<div class="paper rounded-lg px-8 py-20 text-center">
 						<div class="mx-auto mb-6 flex justify-center">
@@ -418,7 +484,7 @@
 										</td>
 										<td class="px-6 py-4">
 											<span class="mono text-sm text-[#3F3F46]">
-												{submission.score.toFixed(2)}
+												{submission.validation_score.toFixed(2)}
 											</span>
 										</td>
 										<td class="px-6 py-4">
@@ -426,10 +492,10 @@
 										</td>
 										<td class="px-6 py-4 text-right">
 											<time
-												datetime={submission.submittedAt}
+												datetime={submission.submitted_at}
 												class="text-sm font-light text-[#71717A]"
 											>
-												{formatDate(submission.submittedAt)}
+												{formatDate(submission.submitted_at)}
 											</time>
 										</td>
 									</tr>
@@ -443,8 +509,8 @@
 						{#each submissions as submission (submission.id)}
 							<li class="paper rounded-lg p-5">
 								<div class="flex items-start justify-between gap-4">
-									<div>
-										<p class="text-sm font-light text-[#18181B]">{submission.title}</p>
+									<div class="min-w-0">
+										<p class="truncate text-sm font-light text-[#18181B]">{submission.title}</p>
 										<p class="mono mt-1 text-xs text-[#A1A1AA]" title={submission.md5}>
 											{truncateMd5(submission.md5)}
 										</p>
@@ -458,12 +524,12 @@
 									</div>
 									<div>
 										<dt class="text-[10px] tracking-[0.2em] uppercase text-[#A1A1AA]">Score</dt>
-										<dd class="mono mt-1 text-xs text-[#3F3F46]">{submission.score.toFixed(2)}</dd>
+										<dd class="mono mt-1 text-xs text-[#3F3F46]">{submission.validation_score.toFixed(2)}</dd>
 									</div>
 									<div>
 										<dt class="text-[10px] tracking-[0.2em] uppercase text-[#A1A1AA]">Submitted</dt>
 										<dd class="mt-1 text-xs font-light text-[#71717A]">
-											<time datetime={submission.submittedAt}>{formatDate(submission.submittedAt)}</time>
+											<time datetime={submission.submitted_at}>{formatDate(submission.submitted_at)}</time>
 										</dd>
 									</div>
 								</dl>
@@ -475,7 +541,7 @@
 
 			<!-- ============ QUIET FOOTNOTE ============ -->
 			<p class="mt-20 text-center text-xs font-light text-[#A1A1AA]">
-				Approved mappings enter the public dataset — permanent, attributed, and free.
+				Approved mappings enter the public dataset — permanent, attributed.
 			</p>
 		</div>
 	</main>
@@ -522,6 +588,21 @@
 			0 16px 32px -20px rgba(24, 24, 27, 0.12);
 	}
 
+	/* ---- Active nav item: a quiet underline of ink ---- */
+	.nav-link--active {
+		position: relative;
+	}
+
+	.nav-link--active::after {
+		content: '';
+		position: absolute;
+		left: 0.75rem;
+		right: 0.75rem;
+		bottom: 0.15rem;
+		height: 1px;
+		background: linear-gradient(to right, transparent, rgba(99, 102, 241, 0.6), transparent);
+	}
+
 	/* ---- User menu (native details) ---- */
 	.user-menu summary::-webkit-details-marker {
 		display: none;
@@ -529,6 +610,33 @@
 
 	.user-menu[open] summary {
 		background: #f4f4f5;
+	}
+
+	/* ---- Loading shimmer: pale moonlight passing over paper ---- */
+	.shimmer {
+		background: linear-gradient(
+			90deg,
+			#f4f4f5 25%,
+			#eeeef2 50%,
+			#f4f4f5 75%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.6s ease-in-out infinite;
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.shimmer {
+			animation: none;
+		}
 	}
 
 	/* ---- Lunar phase glyphs, drawn in ink (pure CSS) ---- */

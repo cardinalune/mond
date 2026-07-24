@@ -1,6 +1,6 @@
-svelte
-<!-- src/routes/settings/+page.svelte -->
+
 <script lang="ts">
+	import { user, authLoading } from "$lib/stores/auth";
 	// Lucide icon path data, inlined — no icon package required.
 	const iconPaths: Record<string, string> = {
 		'layout-dashboard':
@@ -22,15 +22,16 @@ svelte
 			'<path d="M10 2v8l3-3 3 3V2"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>'
 	};
 
-	// Realistic Mond data. Replace with load() data in production.
-	const contributor = {
-		name: 'Lena Hoffmann',
-		username: 'lena.hoffmann',
-		email: 'lena@posteo.de',
-		initials: 'LH',
-		role: 'Contributor',
-		memberSince: '—' // placeholder
-	};
+	// Realistic Mond data.
+
+	function getInitials(name: string) {
+    return name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+	}
 
 	const about = {
 		version: 'MVP',
@@ -93,15 +94,9 @@ svelte
 						{@render icon('layout-dashboard', 15)}
 						Dashboard
 					</a>
+					
 					<a
-						href="/dataset"
-						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
-					>
-						{@render icon('file-down', 15)}
-						Dataset
-					</a>
-					<a
-						href="/settings"
+						href="/dashboard/settings"
 						aria-current="page"
 						class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[#18181B]"
 					>
@@ -115,14 +110,14 @@ svelte
 			<details class="user-menu relative">
 				<summary
 					class="flex cursor-pointer list-none items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-[#F4F4F5]"
-					aria-label="Account menu for {contributor.name}"
+					aria-label="Account menu for {$user?.username}"
 				>
 					<span
 						class="flex h-8 w-8 items-center justify-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/[0.07] text-xs font-medium text-[#6D28D9]"
 					>
-						{contributor.initials}
+						{$user ? getInitials($user.username) : ""}
 					</span>
-					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{contributor.name}</span>
+					<span class="hidden text-sm font-light text-[#3F3F46] sm:inline">{$user?.username}</span>
 					<span class="text-[#A1A1AA]">{@render icon('chevron-down', 14)}</span>
 				</summary>
 
@@ -131,11 +126,11 @@ svelte
 					role="menu"
 				>
 					<div class="border-b border-[#F4F4F5] px-4 py-3">
-						<p class="text-sm text-[#18181B]">{contributor.name}</p>
-						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{contributor.email}</p>
+						<p class="text-sm text-[#18181B]">{$user?.username}</p>
+						<p class="mono mt-0.5 text-xs text-[#A1A1AA]">{$user?.email}</p>
 					</div>
 					<a
-						href="/settings"
+						href="/dashboard/settings"
 						role="menuitem"
 						class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-light text-[#3F3F46] transition-colors hover:bg-[#F4F4F5]"
 					>
@@ -163,15 +158,9 @@ svelte
 				{@render icon('layout-dashboard', 14)}
 				Dashboard
 			</a>
+			
 			<a
-				href="/dataset"
-				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#71717A] transition-colors hover:text-[#18181B]"
-			>
-				{@render icon('file-down', 14)}
-				Dataset
-			</a>
-			<a
-				href="/settings"
+				href="/dashboard/settings"
 				aria-current="page"
 				class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#18181B]"
 			>
@@ -210,11 +199,11 @@ svelte
 					<dl class="divide-y divide-[#F4F4F5]">
 						<div class="flex items-baseline justify-between gap-6 py-3.5 first:pt-0">
 							<dt class="text-sm font-light text-[#71717A]">Username</dt>
-							<dd class="mono text-sm text-[#3F3F46]">{contributor.username}</dd>
+							<dd class="mono text-sm text-[#3F3F46]">{$user?.username}</dd>
 						</div>
 						<div class="flex items-baseline justify-between gap-6 py-3.5">
 							<dt class="text-sm font-light text-[#71717A]">Email</dt>
-							<dd class="mono text-sm text-[#3F3F46]">{contributor.email}</dd>
+							<dd class="mono text-sm text-[#3F3F46]">{$user?.email}</dd>
 						</div>
 						<div class="flex items-baseline justify-between gap-6 py-3.5">
 							<dt class="text-sm font-light text-[#71717A]">Role</dt>
@@ -222,13 +211,19 @@ svelte
 								<span
 									class="inline-flex items-center rounded-full border border-[#8B5CF6]/30 bg-[#8B5CF6]/10 px-2.5 py-0.5 text-[11px] text-[#6D28D9]"
 								>
-									{contributor.role}
+									{#if $user?.role === "user"}
+										Contributor
+									{:else if $user?.role === "moderator"}
+										Moderator
+									{:else if $user?.role === "admin"}
+										Administrator
+									{/if}
 								</span>
 							</dd>
 						</div>
 						<div class="flex items-baseline justify-between gap-6 py-3.5 last:pb-0">
 							<dt class="text-sm font-light text-[#71717A]">Member since</dt>
-							<dd class="text-sm font-light text-[#3F3F46]">{contributor.memberSince}</dd>
+							<dd class="text-sm font-light text-[#3F3F46]">----</dd>
 						</div>
 					</dl>
 				</div>

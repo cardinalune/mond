@@ -98,3 +98,43 @@ class SubmissionRepository:
         except SQLAlchemyError:
             self.db.rollback()
             raise
+
+    
+    def list_by_user(
+        self,
+        user_id: UUID,
+    ) -> list[Submission]:
+
+        
+        statement = (
+            select(Submission)
+            .where(Submission.user_id == user_id)
+            .order_by(Submission.submitted_at.desc())
+        )
+
+        result = self.db.execute(statement)
+
+        return result.scalars().all()
+
+    def get_user_stats(
+        self,
+        user_id: UUID,
+    ) -> dict:
+
+        submissions = self.list_by_user(user_id)
+
+        return {
+            "pending": sum(
+                s.status == SubmissionStatus.PENDING
+                for s in submissions
+        ),
+            "approved": sum(
+                s.status == SubmissionStatus.APPROVED
+                for s in submissions
+            ),
+            "rejected": sum(
+                s.status == SubmissionStatus.REJECTED
+                for s in submissions
+            ),
+            "total": len(submissions),
+        }
